@@ -1,0 +1,50 @@
+name: LinkMover Enterprise CI
+
+on:
+  push:
+    branches: [ main, LM-* ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-test:
+    name: Build, xUnit Test & DevSecOps Verification
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup .NET 10 SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Setup Node.js (DevSecOps Tools)
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Restore Dependencies
+        run: dotnet restore LinkMover.slnx
+
+      - name: Build Solution (Release)
+        run: dotnet build LinkMover.slnx -c Release --no-restore
+
+      - name: Run xUnit Test Suite
+        run: dotnet test LinkMover.slnx -c Release --no-build --verbosity normal
+
+      - name: DevSecOps SAST & Secret Verification
+        run: |
+          node -e "
+            const { SastScanner } = require('./.agents/agent-master-devsecops/scripts/sast_scanner.js');
+            const scanner = new SastScanner();
+            const res = scanner.scanDirectory('./src', ['.cs', '.json', '.xml']);
+            console.log('SAST Scan Status:', res.status, '| Arquivos Analisados:', res.filesScanned, '| Vulnerabilidades:', res.totalFindings);
+            if (res.status === 'FAILED') {
+              console.error('Critical security issues found:', res.findings);
+              process.exit(1);
+            }
+          "
