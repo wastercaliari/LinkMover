@@ -12,13 +12,13 @@
 - Configuração do Tríplice Registro (Git, Jira, Confluence) com credenciais Atlassian protegidas no `.env` e `.gitignore`.
 - Migração formal da suíte de testes para xUnit com 7 testes unitários aprovados (100% de cobertura nos métodos centrais e rollback seguro).
 - Provisionamento da esteira CI/CD no GitHub Actions (`.github/workflows/ci.yml`) com build Release, execução de testes e scanner SAST integrado.
+- Auditoria de acessibilidade WCAG 2.1 AA na interface Avalonia: propriedades de automação assistiva (leitores de tela), tokens com contraste >= 4.5:1, badge dinâmico de status e botão de cancelamento com rollback gracioso (AGENT_UIUX).
 
 **Next:**
 - Executar e validar pacotes Linux e macOS em hardware/sistemas-alvo reais.
 - Implementação de assinatura digital Authenticode para executáveis Windows visando erradicar falsos positivos de antivírus.
 - Testes automatizados adicionais de integração com caminhos longos, permissões NTFS e volumes externos.
-- Auditoria de acessibilidade WCAG 2.1 AA na interface gráfica Avalonia (AGENT_UIUX).
-
+- Modelagem da visualização de links simbólicos ativos gerenciados no sistema (I-2).
 
 **Blockers:** nenhum
 **Failed:** nenhum

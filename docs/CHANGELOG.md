@@ -9,3 +9,4 @@
 2026-10-20 [SECURITY] @root Adoção da suíte Agent Master DevSecOps e configuração do Tríplice Registro | why: estabelecer governança autônoma, cultura de testes e segurança shift-left (AGDEV-17)
 2026-10-20 [TEST] @tests Migração dos testes de LinkMover.Core para framework formal xUnit com asserções de rollback | why: estabelecer cultura formal de testes automatizados e validação contínua (LM-002)
 2026-10-20 [CI] @ci Provisionamento de pipeline GitHub Actions com build Release, xUnit e scanner SAST | why: automação da esteira de CI/CD e bloqueio preventivo de regressões (LM-002)
+2026-10-20 [UIUX] @ui Refatoração da MainWindow com acessibilidade WCAG 2.1 AA, botão de cancelamento e status dinâmico | why: ergonomia de uso, suporte a leitores de tela e saída de emergência graciosa (LM-003)
