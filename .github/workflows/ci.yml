@@ -14,8 +14,6 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
-        with:
-          submodules: recursive
 
       - name: Setup .NET 10 SDK
         uses: actions/setup-dotnet@v4
@@ -39,7 +37,7 @@ jobs:
       - name: DevSecOps SAST & Secret Verification
         run: |
           node -e "
-            const { SastScanner } = require('./.agents/agent-master-devsecops/scripts/sast_scanner.js');
+            const { SastScanner } = require('./scripts/sast_scanner.js');
             const scanner = new SastScanner();
             const res = scanner.scanDirectory('./src', ['.cs', '.json', '.xml']);
             console.log('SAST Scan Status:', res.status, '| Arquivos Analisados:', res.filesScanned, '| Vulnerabilidades:', res.totalFindings);
