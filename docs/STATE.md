@@ -17,6 +17,7 @@
   - [LM-1](https://wastercaliari.atlassian.net/browse/LM-1): Fundação Técnica: Baseline do LinkMover (Concluído).
   - [LM-2](https://wastercaliari.atlassian.net/browse/LM-2): Cultura de Testes xUnit e Esteira CI/CD com SAST (Concluído).
   - [LM-3](https://wastercaliari.atlassian.net/browse/LM-3): Acessibilidade WCAG 2.1 AA e Botão de Cancelamento na UI (Concluído).
+- [LM-5](https://wastercaliari.atlassian.net/browse/LM-5): Redesign UI com Design System Synthetic Hyperdrive (Dark Mode, Telemetria I/O, Cards de Disco e Terminal Console) (Concluído).
 - **Confluence Exclusivo do LinkMover (Espaço LINK):**
   - Espaço Oficial: [LinkMover Home (LINK)](https://wastercaliari.atlassian.net/wiki/spaces/LINK).
   - [ADR-001: Arquitetura e Núcleo Transacional do LinkMover Universal](https://wastercaliari.atlassian.net/wiki/spaces/LINK).
