@@ -12,3 +12,4 @@
 2026-10-20 [UIUX] @ui Refatoração da MainWindow com acessibilidade WCAG 2.1 AA, botão de cancelamento e status dinâmico | why: ergonomia de uso, suporte a leitores de tela e saída de emergência graciosa (LM-003)
 2026-10-20 [GOVERNANCE] @remote Ativação do Tríplice Registro com publicação GitHub, Jira AGDEV-36/AGDEV-37 e Confluence ADR-001 | why: fechamento do ciclo corporativo de rastreabilidade contínua (AGDEV-36)
 2026-10-20 [GOVERNANCE] @atlassian Segregação total do LinkMover com criação do projeto Jira LM e espaço Confluence LINK exclusivos | why: isolamento corporativo e conformidade estrita da identidade do produto (LM-005)
+2026-10-20 [UIUX] @app Redesign visual e ergonômico completo baseado no Design System Synthetic Hyperdrive (Dark Mode, Telemetria I/O, Cards de Disco e Terminal Console) | why: modernização de padrão industrial de telemetria e ergonomia para desenvolvedores (LM-5)
