@@ -9,18 +9,20 @@
 - Pacotes self-contained multiplataforma gerados em `releases/` (win-x64, linux-x64, osx-x64, osx-arm64) com hashes SHA-256.
 - Script de automação de pacotes `scripts/publish-all.ps1` e script de compilação `Build-LinkMover.bat`.
 - Adoção oficial da suíte de governança e multi-agentes **Agent Master DevSecOps** (`git@github.com:ContalApps/agent-master-devsecops.git`).
-- Configuração do Tríplice Registro (Git, Jira, Confluence) com credenciais Atlassian protegidas no `.env` e `.gitignore`.
 - Migração formal da suíte de testes para xUnit com 7 testes unitários aprovados (100% de cobertura nos métodos centrais e rollback seguro).
 - Provisionamento da esteira CI/CD no GitHub Actions (`.github/workflows/ci.yml`) com build Release, execução de testes e scanner SAST integrado.
 - Auditoria de acessibilidade WCAG 2.1 AA na interface Avalonia: propriedades de automação assistiva (leitores de tela), tokens com contraste >= 4.5:1, badge dinâmico de status e botão de cancelamento com rollback gracioso (AGENT_UIUX).
-- **Publicação Remota no GitHub:** Repositório https://github.com/wastercaliari/LinkMover com branch `main` e workflows de CI 100% verdes (Run 39384440573 aprovada em 1m36s).
-- **Tríplice Registro Efetivo Ativado:**
-  - Jira: [AGDEV-36](https://wastercaliari.atlassian.net/browse/AGDEV-36) (Concluído com relatório denso de 15 seções).
-  - Confluence: [ADR-001](https://wastercaliari.atlassian.net/wiki/spaces/AGDEV/pages/3244034) (Arquitetura do LinkMover homologada no espaço AGDEV).
-  - Backlog Priorizado: [AGDEV-37](https://wastercaliari.atlassian.net/browse/AGDEV-37) (Cadastrado em 'A fazer' para a Ideia I-2).
+- **Repositório Git Exclusivo do LinkMover:** [https://github.com/wastercaliari/LinkMover](https://github.com/wastercaliari/LinkMover) com branches `main`, `LM-002`, `LM-003` e esteira CI 100% verde ([Run 39384440573](https://github.com/wastercaliari/LinkMover/actions/runs/39384440573)).
+- **Jira Software Exclusivo do LinkMover (Projeto LM):**
+  - [LM-1](https://wastercaliari.atlassian.net/browse/LM-1): Fundação Técnica: Baseline do LinkMover (Concluído).
+  - [LM-2](https://wastercaliari.atlassian.net/browse/LM-2): Cultura de Testes xUnit e Esteira CI/CD com SAST (Concluído).
+  - [LM-3](https://wastercaliari.atlassian.net/browse/LM-3): Acessibilidade WCAG 2.1 AA e Botão de Cancelamento na UI (Concluído).
+- **Confluence Exclusivo do LinkMover (Espaço LINK):**
+  - Espaço Oficial: [LinkMover Home (LINK)](https://wastercaliari.atlassian.net/wiki/spaces/LINK).
+  - [ADR-001: Arquitetura e Núcleo Transacional do LinkMover Universal](https://wastercaliari.atlassian.net/wiki/spaces/LINK).
 
 **Next:**
-- Implementar gerenciador de links ativos e histórico de links simbólicos na UI (AGDEV-37 / Ideia I-2).
+- [LM-4](https://wastercaliari.atlassian.net/browse/LM-4): Implementar gerenciador de links ativos e histórico de links simbólicos na UI (Ideia I-2).
 - Executar e validar pacotes Linux e macOS em hardware/sistemas-alvo reais.
 - Implementação de assinatura digital Authenticode para executáveis Windows visando erradicar falsos positivos de antivírus (Ideia I-1).
 - Testes automatizados adicionais de integração com caminhos longos, permissões NTFS e volumes externos.
