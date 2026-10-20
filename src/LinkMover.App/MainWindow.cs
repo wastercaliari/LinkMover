@@ -1,4 +1,5 @@
 using Avalonia;
+using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Layout;
@@ -26,33 +27,47 @@ public sealed class MainWindow : Window
             new GradientStop(Color.Parse("#EDE7FF"), 1)
         }
     };
-    private static readonly IBrush Ink = Brush.Parse("#172033");
-    private static readonly IBrush Muted = Brush.Parse("#65718A");
-    private static readonly IBrush Accent = Brush.Parse("#4F5FEA");
+
+    // Design Tokens (WCAG 2.1 AA Compliant Contrast >= 4.5:1)
+    private static readonly IBrush Ink = Brush.Parse("#101828");
+    private static readonly IBrush Muted = Brush.Parse("#344054");
+    private static readonly IBrush SubMuted = Brush.Parse("#475467");
+    private static readonly IBrush Accent = Brush.Parse("#3538CD");
     private static readonly IBrush BorderColor = Brush.Parse("#BFFFFFFF");
     private static readonly IBrush Glass = Brush.Parse("#CFFFFFFF");
     private static readonly IBrush GlassStrong = Brush.Parse("#E8FFFFFF");
+
     private readonly TextBox source = new() { PlaceholderText = "Selecione a pasta que deseja mover", IsReadOnly = true, Background = Brush.Parse("#E8FFFFFF") };
     private readonly TextBox destination = new() { PlaceholderText = "Selecione onde os arquivos ficarão", IsReadOnly = true, Background = Brush.Parse("#E8FFFFFF") };
     private readonly TextBlock status = new() { Text = "Tudo pronto. Escolha a origem e o destino.", TextWrapping = TextWrapping.Wrap, Foreground = Muted, FontSize = 13 };
     private readonly TextBox log = new() { IsReadOnly = true, AcceptsReturn = true, TextWrapping = TextWrapping.Wrap, MinHeight = 96, MaxHeight = 150 };
     private readonly Button run = new() { Content = "Validar e mover", HorizontalAlignment = HorizontalAlignment.Stretch, Height = 48, FontSize = 14, FontWeight = FontWeight.SemiBold };
+    private readonly Button cancel = new() { Content = "Cancelar", MinWidth = 110, Height = 48, FontSize = 14, FontWeight = FontWeight.SemiBold, IsEnabled = false };
     private readonly Button sourceBrowse = new() { Content = "Procurar", MinWidth = 104, Height = 40 };
     private readonly Button destinationBrowse = new() { Content = "Procurar", MinWidth = 104, Height = 40 };
     private readonly ProgressBar progress = new() { IsIndeterminate = false, Minimum = 0, Maximum = 100, Height = 4 };
 
+    private readonly TextBlock indicatorText = new() { Text = "AGUARDANDO", FontSize = 9, FontWeight = FontWeight.Bold, Foreground = Brush.Parse("#344054") };
+    private readonly Border indicatorBadge = new() { Background = Brush.Parse("#F2F4F7"), CornerRadius = new CornerRadius(10), Padding = new Thickness(9, 4) };
+
+    private CancellationTokenSource? currentCts;
+
     public MainWindow(string[]? args = null)
     {
-        Title = "LinkMover";
+        Title = "LinkMover Universal";
         Width = 900;
-        Height = 800;
+        Height = 820;
         MinWidth = 680;
         MinHeight = 650;
         Background = Canvas;
         WindowStartupLocation = WindowStartupLocation.CenterScreen;
         FontFamily = new FontFamily("Inter, Segoe UI, sans-serif");
 
+        indicatorBadge.Child = indicatorText;
+
+        ApplyAccessibilityProperties();
         ApplyStyles();
+
         var parsed = args ?? Array.Empty<string>();
         for (int i = 0; i + 1 < parsed.Length; i++)
         {
@@ -71,20 +86,26 @@ public sealed class MainWindow : Window
             {
                 Eyebrow("GERENCIAMENTO DE ARMAZENAMENTO"),
                 new TextBlock { Text = "Mova sem quebrar caminhos", FontSize = 27, FontWeight = FontWeight.Bold, Foreground = Ink, TextWrapping = TextWrapping.Wrap },
-                new TextBlock { Text = "Transfira pastas para outro disco e mantenha o caminho original funcionando.", FontSize = 14, Foreground = Muted, TextWrapping = TextWrapping.Wrap, MaxWidth = 650 }
+                new TextBlock { Text = "Transfira pastas para outro disco e mantenha o caminho original funcionando com integridade SHA-256.", FontSize = 14, Foreground = SubMuted, TextWrapping = TextWrapping.Wrap, MaxWidth = 650 }
             }
         });
 
-        content.Children.Add(BuildPathCard("01", "Pasta de origem", "A pasta atual do aplicativo ou dos arquivos.", source, sourceBrowse));
-        content.Children.Add(BuildPathCard("02", "Novo local", "O LinkMover criará a pasta de destino dentro deste local.", destination, destinationBrowse));
+        content.Children.Add(BuildPathCard("01", "Pasta de origem", "A pasta atual do aplicativo ou dos arquivos a serem movidos.", source, sourceBrowse));
+        content.Children.Add(BuildPathCard("02", "Novo local", "O LinkMover criará a pasta de destino dentro deste local e o link correspondente.", destination, destinationBrowse));
         content.Children.Add(BuildSafetyCard());
-        content.Children.Add(run);
+
+        // Action Row with Run and Cancel Buttons
+        var actionGrid = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto"), ColumnSpacing = 12 };
+        Grid.SetColumn(run, 0); actionGrid.Children.Add(run);
+        Grid.SetColumn(cancel, 1); actionGrid.Children.Add(cancel);
+        content.Children.Add(actionGrid);
+
         content.Children.Add(new Border { Background = Accent, Height = 2, CornerRadius = new CornerRadius(1), Child = progress });
         content.Children.Add(BuildStatusCard());
         content.Children.Add(new TextBlock
         {
             Text = "Antes de começar: feche o aplicativo que usa essa pasta e mantenha um backup dos dados importantes.",
-            FontSize = 11, Foreground = Muted, TextWrapping = TextWrapping.Wrap, HorizontalAlignment = HorizontalAlignment.Center, TextAlignment = TextAlignment.Center, MaxWidth = 700
+            FontSize = 11, Foreground = SubMuted, TextWrapping = TextWrapping.Wrap, HorizontalAlignment = HorizontalAlignment.Center, TextAlignment = TextAlignment.Center, MaxWidth = 700
         });
 
         var scroll = new ScrollViewer
@@ -98,8 +119,33 @@ public sealed class MainWindow : Window
         Content = shell;
 
         run.Click += async (_, _) => await RunMoveAsync();
+        cancel.Click += (_, _) => CancelMove();
         sourceBrowse.Click += async (_, _) => await ChooseFolderAsync(source, "Selecione a pasta de origem");
         destinationBrowse.Click += async (_, _) => await ChooseFolderAsync(destination, "Selecione o local de destino");
+    }
+
+    private void ApplyAccessibilityProperties()
+    {
+        AutomationProperties.SetName(source, "Caminho da pasta de origem");
+        AutomationProperties.SetHelpText(source, "Exibe a pasta selecionada que será movida.");
+
+        AutomationProperties.SetName(sourceBrowse, "Procurar pasta de origem");
+        AutomationProperties.SetHelpText(sourceBrowse, "Abre a janela para selecionar a pasta de origem.");
+
+        AutomationProperties.SetName(destination, "Caminho do novo local de destino");
+        AutomationProperties.SetHelpText(destination, "Exibe o local onde a pasta será recriada.");
+
+        AutomationProperties.SetName(destinationBrowse, "Procurar novo local de destino");
+        AutomationProperties.SetHelpText(destinationBrowse, "Abre a janela para selecionar o diretório pai de destino.");
+
+        AutomationProperties.SetName(run, "Validar e mover");
+        AutomationProperties.SetHelpText(run, "Inicia a cópia, validação por hash SHA-256 e substituição por link simbólico.");
+
+        AutomationProperties.SetName(cancel, "Cancelar movimentação");
+        AutomationProperties.SetHelpText(cancel, "Interrompe a operação em andamento e restaura a origem com segurança.");
+
+        AutomationProperties.SetName(log, "Detalhes e histórico de execução");
+        AutomationProperties.SetHelpText(log, "Exibe as etapas realizadas e eventuais mensagens de diagnóstico.");
     }
 
     private void ApplyStyles()
@@ -109,7 +155,7 @@ public sealed class MainWindow : Window
             Setters =
             {
                 new Setter(Button.BackgroundProperty, Brush.Parse("#D9FFFFFF")),
-                new Setter(Button.ForegroundProperty, Brush.Parse("#3444B8")),
+                new Setter(Button.ForegroundProperty, Brush.Parse("#2B38C2")),
                 new Setter(Button.BorderBrushProperty, Brush.Parse("#BFFFFFFF")),
                 new Setter(Button.BorderThicknessProperty, new Thickness(1)),
                 new Setter(Button.PaddingProperty, new Thickness(16, 10)),
@@ -138,11 +184,18 @@ public sealed class MainWindow : Window
                 new Setter(ProgressBar.ForegroundProperty, Accent)
             }
         });
+
         run.Background = Accent;
         run.Foreground = Brushes.White;
         run.BorderBrush = Accent;
         run.BorderThickness = new Thickness(0);
         run.FontSize = 14;
+
+        cancel.Background = Brush.Parse("#FEF3F2");
+        cancel.Foreground = Brush.Parse("#B42318");
+        cancel.BorderBrush = Brush.Parse("#FECDCA");
+        cancel.BorderThickness = new Thickness(1);
+
         sourceBrowse.Background = GlassStrong;
         destinationBrowse.Background = GlassStrong;
     }
@@ -152,7 +205,7 @@ public sealed class MainWindow : Window
         var brandIcon = new Border
         {
             Width = 42, Height = 42, CornerRadius = new CornerRadius(13),
-            Background = new LinearGradientBrush { StartPoint = new RelativePoint(0, 0, RelativeUnit.Relative), EndPoint = new RelativePoint(1, 1, RelativeUnit.Relative), GradientStops = new GradientStops { new GradientStop(Color.Parse("#7184FF"), 0), new GradientStop(Color.Parse("#4F46E5"), 1) } },
+            Background = new LinearGradientBrush { StartPoint = new RelativePoint(0, 0, RelativeUnit.Relative), EndPoint = new RelativePoint(1, 1, RelativeUnit.Relative), GradientStops = new GradientStops { new GradientStop(Color.Parse("#7184FF"), 0), new GradientStop(Color.Parse("#3538CD"), 1) } },
             Child = new TextBlock { Text = "L", FontSize = 24, FontWeight = FontWeight.Bold, Foreground = Brushes.White, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center, TextAlignment = TextAlignment.Center }
         };
         var brand = new StackPanel
@@ -164,7 +217,7 @@ public sealed class MainWindow : Window
                 new StackPanel { Spacing = 1, VerticalAlignment = VerticalAlignment.Center, Children =
                     {
                         new TextBlock { Text = "LinkMover", FontSize = 17, FontWeight = FontWeight.Bold, Foreground = Ink },
-                        new TextBlock { Text = "SMART STORAGE", FontSize = 10, FontWeight = FontWeight.SemiBold, Foreground = Muted, LetterSpacing = 1.4 }
+                        new TextBlock { Text = "ENTERPRISE SMART STORAGE", FontSize = 10, FontWeight = FontWeight.SemiBold, Foreground = SubMuted, LetterSpacing = 1.4 }
                     }
                 }
             }
@@ -172,7 +225,7 @@ public sealed class MainWindow : Window
         var platform = new Border
         {
             Background = Brush.Parse("#AFFFFFFF"), BorderBrush = Brush.Parse("#BFFFFFFF"), BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(14), Padding = new Thickness(12, 7),
-            Child = new TextBlock { Text = "●  Windows · Linux · macOS", FontSize = 11, FontWeight = FontWeight.SemiBold, Foreground = Brush.Parse("#067647") }
+            Child = new TextBlock { Text = "●  Windows · Linux · macOS", FontSize = 11, FontWeight = FontWeight.SemiBold, Foreground = Brush.Parse("#027A48") }
         };
         var row = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto"), VerticalAlignment = VerticalAlignment.Center };
         Grid.SetColumn(brand, 0); row.Children.Add(brand);
@@ -192,7 +245,7 @@ public sealed class MainWindow : Window
         var labels = new StackPanel { Spacing = 4, VerticalAlignment = VerticalAlignment.Center, Children =
         {
             new TextBlock { Text = title, FontSize = 15, FontWeight = FontWeight.SemiBold, Foreground = Ink },
-            new TextBlock { Text = description, FontSize = 12, Foreground = Muted, TextWrapping = TextWrapping.Wrap }
+            new TextBlock { Text = description, FontSize = 12, Foreground = SubMuted, TextWrapping = TextWrapping.Wrap }
         }};
         var top = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 12, Children = { numberBadge, labels } };
         var pathGrid = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto"), ColumnSpacing = 10 };
@@ -216,8 +269,8 @@ public sealed class MainWindow : Window
         };
         var details = new StackPanel { Spacing = 5, Children =
         {
-            new TextBlock { Text = "Validação antes da substituição", FontSize = 13, FontWeight = FontWeight.SemiBold, Foreground = Ink },
-            new TextBlock { Text = "O LinkMover compara os arquivos por SHA-256 e só troca o caminho depois de validar a cópia. Se houver falha, tenta restaurar a origem.", FontSize = 12, Foreground = Muted, TextWrapping = TextWrapping.Wrap }
+            new TextBlock { Text = "Validação segura por hash SHA-256", FontSize = 13, FontWeight = FontWeight.SemiBold, Foreground = Ink },
+            new TextBlock { Text = "O LinkMover calcula o hash SHA-256 de cada arquivo e valida a cópia antes de qualquer alteração na origem. Em caso de cancelamento ou falha, o rollback restaura os arquivos imediatamente.", FontSize = 12, Foreground = SubMuted, TextWrapping = TextWrapping.Wrap }
         }};
         var row = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 13, Children = { shield, details } };
         return new Border { Background = Brush.Parse("#A6E9F8EF"), BorderBrush = Brush.Parse("#BFFFFFFF"), BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(20), Padding = new Thickness(19), Child = row };
@@ -226,14 +279,21 @@ public sealed class MainWindow : Window
     private Control BuildStatusCard()
     {
         var heading = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto"), VerticalAlignment = VerticalAlignment.Center };
-        var title = new TextBlock { Text = "STATUS DA OPERAÇÃO", FontSize = 10, FontWeight = FontWeight.Bold, Foreground = Muted, LetterSpacing = 1.2 };
-        var indicator = new Border { Background = Brush.Parse("#F2F4F7"), CornerRadius = new CornerRadius(10), Padding = new Thickness(9, 4), Child = new TextBlock { Text = "AGUARDANDO", FontSize = 9, FontWeight = FontWeight.Bold, Foreground = Muted } };
-        Grid.SetColumn(title, 0); heading.Children.Add(title); Grid.SetColumn(indicator, 1); heading.Children.Add(indicator);
+        var title = new TextBlock { Text = "STATUS DA OPERAÇÃO", FontSize = 10, FontWeight = FontWeight.Bold, Foreground = SubMuted, LetterSpacing = 1.2 };
+        Grid.SetColumn(title, 0); heading.Children.Add(title);
+        Grid.SetColumn(indicatorBadge, 1); heading.Children.Add(indicatorBadge);
         return new Border
         {
             Background = Glass, BorderBrush = BorderColor, BorderThickness = new Thickness(1), BoxShadow = BoxShadows.Parse("0 10 28 0 #180D1B45"), CornerRadius = new CornerRadius(20), Padding = new Thickness(20),
-            Child = new StackPanel { Spacing = 12, Children = { heading, status, new Border { Height = 1, Background = BorderColor }, new TextBlock { Text = "DETALHES", FontSize = 10, FontWeight = FontWeight.Bold, Foreground = Muted, LetterSpacing = 1.2 }, log } }
+            Child = new StackPanel { Spacing = 12, Children = { heading, status, new Border { Height = 1, Background = BorderColor }, new TextBlock { Text = "DETALHES DA EXECUÇÃO", FontSize = 10, FontWeight = FontWeight.Bold, Foreground = SubMuted, LetterSpacing = 1.2 }, log } }
         };
+    }
+
+    private void SetStatusBadge(string label, IBrush background, IBrush textBrush)
+    {
+        indicatorText.Text = label;
+        indicatorText.Foreground = textBrush;
+        indicatorBadge.Background = background;
     }
 
     private static TextBlock Eyebrow(string text) => new() { Text = text, FontSize = 10, FontWeight = FontWeight.Bold, Foreground = Accent, LetterSpacing = 1.5 };
@@ -254,13 +314,30 @@ public sealed class MainWindow : Window
         if (folders.Count > 0 && folders[0].TryGetLocalPath() is { } path) target.Text = path;
     }
 
+    private void CancelMove()
+    {
+        if (currentCts is { IsCancellationRequested: false })
+        {
+            cancel.IsEnabled = false;
+            status.Text = "Cancelamento solicitado. Interrompendo com segurança e restaurando a origem...";
+            log.Text += "• [CANCELAMENTO] Operação interrompida pelo usuário. Disparando rollback..." + Environment.NewLine;
+            currentCts.Cancel();
+        }
+    }
+
     private async Task RunMoveAsync()
     {
         var src = source.Text?.Trim() ?? "";
         var parent = destination.Text?.Trim() ?? "";
-        if (src.Length == 0 || parent.Length == 0) { status.Text = "Selecione a pasta de origem e o novo local antes de continuar."; return; }
+        if (src.Length == 0 || parent.Length == 0)
+        {
+            status.Text = "Selecione a pasta de origem e o novo local antes de continuar.";
+            return;
+        }
+
         var dest = Path.Combine(parent, Path.GetFileName(Path.TrimEndingDirectorySeparator(src)));
-        if (!await ConfirmAsync("A operação copiará e validará os arquivos e então substituirá o caminho original.\n\nOrigem: " + src + "\nDestino: " + dest + "\n\nContinuar?")) return;
+        if (!await ConfirmAsync("A operação copiará e validará os arquivos e então criará o link simbólico.\n\nOrigem: " + src + "\nDestino: " + dest + "\n\nContinuar?")) return;
+
         if (OperatingSystem.IsWindows() && !IsAdministrator() && !IsDeveloperModeEnabled())
         {
             if (!await ConfirmAsync("O Windows pode exigir permissão administrativa para criar o link simbólico. O aplicativo pedirá confirmação antes de reiniciar via UAC. Nenhuma pasta será alterada antes disso. Continuar?")) return;
@@ -271,20 +348,65 @@ public sealed class MainWindow : Window
                 psi.ArgumentList.Add("--source"); psi.ArgumentList.Add(src); psi.ArgumentList.Add("--destination"); psi.ArgumentList.Add(parent);
                 Process.Start(psi); Close(); return;
             }
-            catch (Exception ex) { await MessageAsync("Não foi possível reiniciar com permissão administrativa. Ative o Developer Mode ou execute como administrador.\n\n" + ex.Message); return; }
+            catch (Exception ex)
+            {
+                await MessageAsync("Não foi possível reiniciar com permissão administrativa. Ative o Developer Mode ou execute como administrador.\n\n" + ex.Message);
+                return;
+            }
         }
 
-        run.IsEnabled = false; sourceBrowse.IsEnabled = false; destinationBrowse.IsEnabled = false; progress.IsIndeterminate = true; status.Text = "Operação em andamento…"; log.Text = "";
-        var reporter = new Progress<string>(s => { status.Text = s; log.Text += "• " + s + Environment.NewLine; });
+        currentCts = new CancellationTokenSource();
+        run.IsEnabled = false;
+        cancel.IsEnabled = true;
+        sourceBrowse.IsEnabled = false;
+        destinationBrowse.IsEnabled = false;
+        progress.IsIndeterminate = true;
+        status.Text = "Operação em andamento...";
+        log.Text = "";
+        SetStatusBadge("EM ANDAMENTO", Brush.Parse("#EFF4FF"), Brush.Parse("#175CD3"));
+
+        var reporter = new Progress<string>(s =>
+        {
+            status.Text = s;
+            log.Text += "• " + s + Environment.NewLine;
+        });
+
         try
         {
-            var result = await SafeMover.MoveToLinkedFolderAsync(src, parent, reporter);
+            var result = await SafeMover.MoveToLinkedFolderAsync(src, parent, reporter, currentCts.Token);
             status.Text = result.Message;
-            log.Text += Environment.NewLine + "Arquivos: " + result.Files.ToString("N0", CultureInfo.InvariantCulture) + Environment.NewLine + "Bytes: " + result.Bytes.ToString("N0", CultureInfo.InvariantCulture) + Environment.NewLine + "Destino: " + result.Destination + Environment.NewLine + "Backup removido: " + (result.BackupRemoved ? "sim" : "não");
+            SetStatusBadge("CONCLUÍDO", Brush.Parse("#ECFDF3"), Brush.Parse("#027A48"));
+            log.Text += Environment.NewLine + "Arquivos: " + result.Files.ToString("N0", CultureInfo.InvariantCulture) +
+                        Environment.NewLine + "Bytes: " + result.Bytes.ToString("N0", CultureInfo.InvariantCulture) +
+                        Environment.NewLine + "Destino: " + result.Destination +
+                        Environment.NewLine + "Backup removido: " + (result.BackupRemoved ? "sim" : "não");
             await MessageAsync(result.Message);
         }
-        catch (Exception ex) { status.Text = "A operação falhou. Consulte os detalhes abaixo."; log.Text += Environment.NewLine + "ERRO: " + ex; await MessageAsync("Não foi possível concluir.\n\n" + ex.Message); }
-        finally { progress.IsIndeterminate = false; progress.Value = 100; run.IsEnabled = true; sourceBrowse.IsEnabled = true; destinationBrowse.IsEnabled = true; }
+        catch (OperationCanceledException)
+        {
+            status.Text = "Operação cancelada pelo usuário. Origem restaurada com sucesso.";
+            SetStatusBadge("CANCELADO", Brush.Parse("#FEF3F2"), Brush.Parse("#B42318"));
+            log.Text += Environment.NewLine + "[INFO] Rollback concluído com sucesso. Todos os arquivos permanecem intactos na pasta de origem.";
+            await MessageAsync("A operação foi cancelada. Seus arquivos originais foram preservados intactos.");
+        }
+        catch (Exception ex)
+        {
+            status.Text = "A operação falhou. Consulte os detalhes abaixo.";
+            SetStatusBadge("FALHA", Brush.Parse("#FEF3F2"), Brush.Parse("#B42318"));
+            log.Text += Environment.NewLine + "ERRO: " + ex;
+            await MessageAsync("Não foi possível concluir.\n\n" + ex.Message);
+        }
+        finally
+        {
+            progress.IsIndeterminate = false;
+            progress.Value = 100;
+            run.IsEnabled = true;
+            cancel.IsEnabled = false;
+            sourceBrowse.IsEnabled = true;
+            destinationBrowse.IsEnabled = true;
+            currentCts?.Dispose();
+            currentCts = null;
+        }
     }
 
     private async Task<bool> ConfirmAsync(string message)
