@@ -1,0 +1,11 @@
+{
+  "name": "agent-master-devsecops",
+  "displayName": "Agent Master DevSecOps Enterprise",
+  "description": "Hub Universal de Agentes Autônomos de Engenharia & Governança (Orchestrator, DevSecOps, QA, Scrum, SRE, UIUX) com Tríplice Registro e Servidor MCP.",
+  "version": "3.5.0",
+  "suggestedPrompts": [
+    "modo: orchestrator - Diagnosticar o status geral do projeto LinkMover",
+    "modo: qa - Auditar o código e testes do LinkMover contra OWASP e ReDoS",
+    "modo: full-dev - Executar a próxima melhoria priorizada do backlog"
+  ]
+}

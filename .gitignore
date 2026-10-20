@@ -1,0 +1,28 @@
+# .NET build output & published artifacts
+**/bin/
+**/obj/
+.vs/
+.vscode/
+*.user
+*.suo
+artifacts/
+releases/*.zip
+*.exe
+*.dll
+*.pdb
+LinkMover-source.zip
+
+
+# Local SDK used only in this development workspace
+.dotnet/
+dotnet-install.ps1
+
+# Temporary test/release staging
+*.tmp
+*.bak
+
+# Environment variables & local secrets
+.env
+.env.*
+.env.local
+

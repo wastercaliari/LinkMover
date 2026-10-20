@@ -1,0 +1,23 @@
+# STATE (Quadro de Execução Ativo — LinkMover)
+
+**Goal:** Desenvolver, manter e distribuir o LinkMover Universal — aplicativo desktop multiplataforma (Windows, Linux, macOS) com interface gráfica moderna Avalonia Fluent UI e núcleo independente de movimentação segura de diretórios com links simbólicos e suporte a UAC/Developer Mode.
+
+**Done:**
+- Projeto estruturado em .NET 10 LTS e Avalonia 12.1.4 (`src/LinkMover.App`, `src/LinkMover.Core`, `tests/LinkMover.Tests`).
+- Núcleo de movimentação segura com validação de reparse points, comparação SHA-256 e rollback automático.
+- Build da solução no Windows aprovado com zero erros e zero avisos (`LinkMover.exe` na raiz).
+- Pacotes self-contained multiplataforma gerados em `releases/` (win-x64, linux-x64, osx-x64, osx-arm64) com hashes SHA-256.
+- Script de automação de pacotes `scripts/publish-all.ps1` e script de compilação `Build-LinkMover.bat`.
+- Adoção oficial da suíte de governança e multi-agentes **Agent Master DevSecOps** (`git@github.com:ContalApps/agent-master-devsecops.git`).
+- Configuração do Tríplice Registro (Git, Jira, Confluence) com credenciais Atlassian protegidas no `.env` e `.gitignore`.
+
+**Next:**
+- Executar e validar pacotes Linux e macOS em hardware/sistemas-alvo reais.
+- Implementação de assinatura digital Authenticode para executáveis Windows visando erradicar falsos positivos de antivírus.
+- Testes automatizados adicionais de integração com caminhos longos, permissões NTFS e volumes externos.
+- Integração contínua (CI/CD) no GitHub Actions com auditoria de segurança (SAST) e testes automatizados.
+
+**Blockers:** nenhum
+**Failed:** nenhum
+**Rules:** vide `docs/ENGINEERING_RULES.md`
+**Ideas:** vide `docs/IDEAS.md`

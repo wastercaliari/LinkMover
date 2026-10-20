@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "agent-master-devsecops": {
+      "command": "node",
+      "args": [
+        "d:/IA Projects/Antigravity Projects/LinkMover/.agents/agent-master-devsecops/scripts/mcp_server.js"
+      ]
+    }
+  }
+}
