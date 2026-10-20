@@ -7,3 +7,5 @@
 2026-10-20 [FEAT] @core Implementação do mecanismo transacional de movimentação com hash SHA-256 e rollback | why: garantir integridade total dos dados sem perda em caso de falha (LM-002)
 2026-10-20 [RELEASE] @releases Geração de binários Windows x64 e pacotes cross-build linux-x64, osx-x64, osx-arm64 | why: disponibilizar pacotes portáveis para teste (LM-003)
 2026-10-20 [SECURITY] @root Adoção da suíte Agent Master DevSecOps e configuração do Tríplice Registro | why: estabelecer governança autônoma, cultura de testes e segurança shift-left (AGDEV-17)
+2026-10-20 [TEST] @tests Migração dos testes de LinkMover.Core para framework formal xUnit com asserções de rollback | why: estabelecer cultura formal de testes automatizados e validação contínua (LM-002)
+2026-10-20 [CI] @ci Provisionamento de pipeline GitHub Actions com build Release, xUnit e scanner SAST | why: automação da esteira de CI/CD e bloqueio preventivo de regressões (LM-002)

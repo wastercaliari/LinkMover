@@ -10,12 +10,15 @@
 - Script de automação de pacotes `scripts/publish-all.ps1` e script de compilação `Build-LinkMover.bat`.
 - Adoção oficial da suíte de governança e multi-agentes **Agent Master DevSecOps** (`git@github.com:ContalApps/agent-master-devsecops.git`).
 - Configuração do Tríplice Registro (Git, Jira, Confluence) com credenciais Atlassian protegidas no `.env` e `.gitignore`.
+- Migração formal da suíte de testes para xUnit com 7 testes unitários aprovados (100% de cobertura nos métodos centrais e rollback seguro).
+- Provisionamento da esteira CI/CD no GitHub Actions (`.github/workflows/ci.yml`) com build Release, execução de testes e scanner SAST integrado.
 
 **Next:**
 - Executar e validar pacotes Linux e macOS em hardware/sistemas-alvo reais.
 - Implementação de assinatura digital Authenticode para executáveis Windows visando erradicar falsos positivos de antivírus.
 - Testes automatizados adicionais de integração com caminhos longos, permissões NTFS e volumes externos.
-- Integração contínua (CI/CD) no GitHub Actions com auditoria de segurança (SAST) e testes automatizados.
+- Auditoria de acessibilidade WCAG 2.1 AA na interface gráfica Avalonia (AGENT_UIUX).
+
 
 **Blockers:** nenhum
 **Failed:** nenhum
